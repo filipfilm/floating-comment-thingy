@@ -1,0 +1,234 @@
+{
+  "name": "fct",
+  "displayName": "FCT",
+  "description": "Floating Comment Threads for VS Code",
+  "version": "0.3.1",
+  "publisher": "fct-team",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "comments",
+    "code review",
+    "collaboration",
+    "annotations",
+    "floating comments"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "extensionDependencies": [
+    "vscode.git"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "fct.addComment",
+        "title": "FCT: Add Comment",
+        "icon": "$(add)"
+      },
+      {
+        "command": "fct.replyToComment",
+        "title": "Reply",
+        "icon": "$(reply)"
+      },
+      {
+        "command": "fct.editComment",
+        "title": "Edit",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "fct.deleteComment",
+        "title": "Delete",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "fct.resolveThread",
+        "title": "Resolve",
+        "icon": "$(check)"
+      },
+      {
+        "command": "fct.unresolveThread",
+        "title": "Re-open",
+        "icon": "$(issues)"
+      },
+      {
+        "command": "fct.deleteThread",
+        "title": "Delete Thread",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "fct.cancelEdit",
+        "title": "Cancel",
+        "icon": "$(close)"
+      },
+      {
+        "command": "fct.saveEdit",
+        "title": "Save",
+        "icon": "$(check)"
+      },
+      {
+        "command": "fct.createCommentFromSelection",
+        "title": "FCT: Add Comment"
+      },
+      {
+        "command": "fct.copyCodeQuote",
+        "title": "FCT: Copy Code Quote"
+      },
+      {
+        "command": "fct.revealComment",
+        "title": "FCT: Reveal Comment"
+      },
+      {
+        "command": "fct.exportActiveComments",
+        "title": "FCT: Export Active Comments to Markdown"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "fct-explorer",
+          "title": "Floating Comments",
+          "icon": "$(comment-discussion)"
+        }
+      ]
+    },
+    "views": {
+      "fct-explorer": [
+        {
+          "id": "fct.commentsView",
+          "name": "Project Comments"
+        }
+      ]
+    },
+    "menus": {
+      "comments/commentThread/title": [
+        {
+          "command": "fct.resolveThread",
+          "group": "inline",
+          "when": "commentController == fct && commentThread == active"
+        },
+        {
+          "command": "fct.unresolveThread",
+          "group": "inline",
+          "when": "commentController == fct && commentThread == resolved"
+        },
+        {
+          "command": "fct.deleteThread",
+          "group": "navigation",
+          "when": "commentController == fct"
+        }
+      ],
+      "comments/commentThread/context": [
+        {
+          "command": "fct.addComment",
+          "group": "inline",
+          "when": "commentController == fct"
+        },
+        {
+          "command": "fct.resolveThread",
+          "group": "inline",
+          "when": "commentController == fct && commentThread == active"
+        },
+        {
+          "command": "fct.unresolveThread",
+          "group": "inline",
+          "when": "commentController == fct && commentThread == resolved"
+        }
+      ],
+      "comments/comment/title": [
+        {
+          "command": "fct.editComment",
+          "group": "inline",
+          "when": "commentController == fct && comment == canEdit"
+        },
+        {
+          "command": "fct.deleteComment",
+          "group": "inline",
+          "when": "commentController == fct && comment == canEdit"
+        }
+      ],
+      "comments/comment/context": [
+        {
+          "command": "fct.cancelEdit",
+          "group": "inline@1",
+          "when": "commentController == fct && comment == editing"
+        },
+        {
+          "command": "fct.saveEdit",
+          "group": "inline@2",
+          "when": "commentController == fct && comment == editing"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "fct.createCommentFromSelection",
+          "group": "navigation@1",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "fct.copyCodeQuote",
+          "group": "navigation@2",
+          "when": "editorHasSelection"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Floating Comment Thingy",
+      "properties": {
+        "fct.username": {
+          "type": "string",
+          "default": "",
+          "description": "Your display name for comments. Used as the author of your comments."
+        },
+        "fct.backendUrl": {
+          "type": "string",
+          "default": "",
+          "description": "URL of the FCT backend server (e.g., http://192.168.1.140:8420). Leave empty for local-only mode."
+        },
+        "fct.slackWebhookUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Slack incoming webhook URL for @mention notifications."
+        },
+        "fct.discordWebhookUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Discord incoming webhook URL for @mention notifications."
+        },
+        "fct.enableGitAnchoring": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Git-aware comment anchoring. When enabled, comments follow code across commits and branches."
+        },
+        "fct.autoResolveOrphans": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically resolve comments when the underlying code is deleted or heavily modified."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTests.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@types/ws": "^8.5.10",
+    "@vscode/test-electron": "^3.0.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  }
+}

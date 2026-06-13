@@ -1,0 +1,9 @@
+out/
+node_modules/
+.vscode-test/
+*.vsix
+backend/data/
+backend/fct-backend
+backend/fct-server
+.DS_Store
+.fct/

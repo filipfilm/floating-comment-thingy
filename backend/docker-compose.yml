@@ -1,0 +1,21 @@
+services:
+  fct-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fct-backend
+    ports:
+      - "8420:8420"
+    volumes:
+      - fct-data:/data
+    environment:
+      - DATA_DIR=/data
+      - PORT=8420
+      # Uncomment and set to enable notifications:
+      # - SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
+      # - DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+    restart: unless-stopped
+
+volumes:
+  fct-data:
+    driver: local
