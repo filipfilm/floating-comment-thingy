@@ -1,9 +1,9 @@
 {
   "name": "fct",
-  "displayName": "FCT",
-  "description": "Floating Comment Threads for VS Code",
+  "displayName": "Floating Comment Thingy",
+  "description": "Google Docs-style floating comments for your code — without modifying source files. Supports Git-aware anchoring, real-time sync, and @mention notifications.",
   "version": "0.3.1",
-  "publisher": "fct-team",
+  "publisher": "filipdobosz",
   "license": "MIT",
   "engines": {
     "vscode": "^1.85.0"

@@ -9,6 +9,7 @@
  */
 
 import * as vscode from 'vscode';
+import * as path from 'path';
 
 export class FCTUriHandler implements vscode.UriHandler {
 
@@ -60,13 +61,33 @@ export class FCTUriHandler implements vscode.UriHandler {
 
   /**
    * Resolve a relative file path to a workspace URI.
+   * Only resolves paths that are inside a workspace folder.
+   * Rejects absolute paths and any path that escapes the workspace via '..'.
    */
   private async resolveFileUri(filePath: string): Promise<vscode.Uri | undefined> {
-    // Try workspace-relative lookup
+    // Reject absolute paths outright — we only accept repo-relative paths
+    if (path.isAbsolute(filePath)) {
+      console.warn('[FCT] Deep link rejected: absolute path not allowed:', filePath);
+      return undefined;
+    }
+
+    // Normalize the path to collapse any .. segments
+    const normalized = path.normalize(filePath);
+
+    // If normalization produces an absolute path or escapes upward, reject it
+    if (path.isAbsolute(normalized) || normalized.startsWith('..')) {
+      console.warn('[FCT] Deep link rejected: path traversal detected:', filePath);
+      return undefined;
+    }
+
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (workspaceFolders) {
       for (const folder of workspaceFolders) {
-        const candidate = vscode.Uri.joinPath(folder.uri, filePath);
+        const candidate = vscode.Uri.joinPath(folder.uri, normalized);
+        // Double-check the resolved path is still inside the workspace folder
+        if (!candidate.fsPath.startsWith(folder.uri.fsPath)) {
+          continue;
+        }
         try {
           await vscode.workspace.fs.stat(candidate);
           return candidate;
@@ -76,13 +97,6 @@ export class FCTUriHandler implements vscode.UriHandler {
       }
     }
 
-    // Try as absolute path
-    try {
-      const absoluteUri = vscode.Uri.file(filePath);
-      await vscode.workspace.fs.stat(absoluteUri);
-      return absoluteUri;
-    } catch {
-      return undefined;
-    }
+    return undefined;
   }
 }

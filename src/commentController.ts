@@ -726,7 +726,8 @@ export class FCTCommentController {
       if (vsThread.uri.toString() === document.uri.toString() && vsThread.range) {
         if (vsThread.range.contains(position)) {
           const md = new vscode.MarkdownString();
-          md.isTrusted = true;
+          // Do NOT set isTrusted=true here — comment bodies contain user input
+          // and trusted MarkdownStrings allow command: links to execute arbitrary commands.
           md.appendMarkdown(`**💬 FCT Thread** ${vsThread.contextValue === 'resolved' ? '(✅ Resolved)' : ''}\n\n`);
           
           for (const comment of vsThread.comments) {

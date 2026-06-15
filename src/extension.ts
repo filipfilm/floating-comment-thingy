@@ -128,8 +128,9 @@ export async function activate(context: vscode.ExtensionContext) {
         // Build the quote blocks
         const quote = text.split('\n').map(line => `> ${line}`).join('\n');
         
-        // Assuming we're making a deeplink string
-        const deepLink = `vscode://filipdobosz.fct/open?file=${encodeURIComponent(fileName)}&line=${lineStart}`;
+        // Use context.extension.id to avoid publisher hardcoding
+        const extensionId = context.extension.id; // e.g. "filipdobosz.fct"
+        const deepLink = `vscode://${extensionId}/open?file=${encodeURIComponent(fileName)}&line=${lineStart}`;
         
         // Provide the markdown representation
         const ext = fileName.split('.').pop() || '';

@@ -426,11 +426,8 @@ export class BackendStorage implements ICommentStorage {
 // ─── Helpers ─────────────────────────────────────────────────────────
 
 function generateId(): string {
-  // Crypto-quality random UUID (available in Node 16+)
-  const hex = [...Array(32)]
-    .map(() => Math.floor(Math.random() * 16).toString(16))
-    .join('');
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  // crypto.randomUUID() is available in Node ≥ 16 and all modern VS Code hosts
+  return require('crypto').randomUUID() as string;
 }
 
 /**

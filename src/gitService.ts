@@ -184,19 +184,23 @@ export class GitService {
 
   /**
    * Get unique contributors across the repository for autocomplete.
+   * Uses execFile (no shell) to prevent command injection.
    */
   async getContributors(uri: vscode.Uri): Promise<string[]> {
     const repo = this.getRepository(uri);
     if (!repo) return [];
 
     return new Promise((resolve) => {
-      cp.exec('git log --format="%aN" | sort -u', { cwd: repo.rootUri.fsPath }, (err, stdout) => {
+      cp.execFile('git', ['log', '--format=%aN'], { cwd: repo.rootUri.fsPath }, (err, stdout) => {
         if (err) {
           console.warn('[FCT] getContributors error:', err);
           resolve([]);
           return;
         }
-        const names = stdout.split('\n').map(n => n.trim()).filter(Boolean);
+        // De-dupe in JS instead of relying on a shell pipe
+        const names = [...new Set(
+          stdout.split('\n').map(n => n.trim()).filter(Boolean)
+        )].sort();
         resolve(names);
       });
     });
@@ -204,24 +208,19 @@ export class GitService {
 
   /**
    * Get the author name from git blame for a specific line.
+   * Uses execFileSync (no shell) to prevent command injection via crafted file paths.
    */
   getBlameAuthor(uri: vscode.Uri, line: number): string | undefined {
     const repo = this.getRepository(uri);
     if (!repo) return undefined;
 
     const relativePath = this.getRelativePath(uri);
-    // line is 1-indexed in our system usually, check how blame expects it
-    // git blame -L <line>,<line> --porcelain <file>
     try {
-      const output = cp.execSync(`git blame -L ${line},${line} --porcelain "${relativePath}"`, {
-        cwd: repo.rootUri.fsPath,
-        encoding: 'utf8',
-        timeout: 2000
-      });
-      // The porcelain format usually starts with the commit hash line, 
-      // then fields like:
-      // author Filip Dobosz
-      // author-mail <email@example.com>
+      const output = cp.execFileSync(
+        'git',
+        ['blame', `-L${line},${line}`, '--porcelain', relativePath],
+        { cwd: repo.rootUri.fsPath, encoding: 'utf8', timeout: 2000 }
+      );
       const match = output.match(/^author\s+(.+)$/m);
       if (match && match[1]) {
         return match[1].trim();
