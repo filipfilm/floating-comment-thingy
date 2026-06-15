@@ -84,15 +84,6 @@ export class FCTWebSocketClient {
   }
 
   /**
-   * Send a message to the backend.
-   */
-  private send(data: unknown): void {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(data));
-    }
-  }
-
-  /**
    * Schedule a reconnection attempt with exponential backoff.
    */
   private scheduleReconnect(): void {

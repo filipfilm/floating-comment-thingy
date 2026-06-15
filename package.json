@@ -21,9 +21,6 @@
   "activationEvents": [
     "onStartupFinished"
   ],
-  "extensionDependencies": [
-    "vscode.git"
-  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -212,9 +209,7 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "lint": "eslint src --ext ts",
-    "pretest": "npm run compile",
-    "test": "node ./out/test/runTests.js"
+    "lint": "eslint src --ext ts"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

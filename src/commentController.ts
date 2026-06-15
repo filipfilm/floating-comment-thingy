@@ -242,7 +242,7 @@ export class FCTCommentController {
     // Resolve @author dynamically using Git blame
     if (body.includes('@author')) {
       const startLine = thread.range ? thread.range.start.line + 1 : 1;
-      const blameName = this.gitService.getBlameAuthor(document.uri, startLine);
+      const blameName = await this.gitService.getBlameAuthor(document.uri, startLine);
       if (blameName) {
         const mentionName = blameName.replace(/\s+/g, '');
         body = body.replace(/@author/g, `@${mentionName}`);
@@ -373,7 +373,7 @@ export class FCTCommentController {
         const rootUri = workspaceFolders[0].uri;
         const uri = vscode.Uri.joinPath(rootUri, fctThread.filePath);
         
-        const blameName = this.gitService.getBlameAuthor(uri, fctThread.currentStartLine);
+        const blameName = await this.gitService.getBlameAuthor(uri, fctThread.currentStartLine);
         if (blameName) {
           const mentionName = blameName.replace(/\s+/g, '');
           bodyText = bodyText.replace(/@author/g, `@${mentionName}`);

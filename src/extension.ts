@@ -219,8 +219,6 @@ export async function activate(context: vscode.ExtensionContext) {
   // ─── Watch for document opens ────────────────────────────────────
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument(async (document) => {
-      // Small delay to ensure the document is fully loaded
-      await new Promise(resolve => setTimeout(resolve, 100));
       await commentController.loadCommentsForDocument(document);
     })
   );

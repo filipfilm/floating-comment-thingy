@@ -208,27 +208,29 @@ export class GitService {
 
   /**
    * Get the author name from git blame for a specific line.
-   * Uses execFileSync (no shell) to prevent command injection via crafted file paths.
+   * Uses execFile asynchronously to avoid blocking the UI thread.
    */
-  getBlameAuthor(uri: vscode.Uri, line: number): string | undefined {
+  async getBlameAuthor(uri: vscode.Uri, line: number): Promise<string | undefined> {
     const repo = this.getRepository(uri);
     if (!repo) return undefined;
 
     const relativePath = this.getRelativePath(uri);
-    try {
-      const output = cp.execFileSync(
+    return new Promise((resolve) => {
+      cp.execFile(
         'git',
         ['blame', `-L${line},${line}`, '--porcelain', relativePath],
-        { cwd: repo.rootUri.fsPath, encoding: 'utf8', timeout: 2000 }
+        { cwd: repo.rootUri.fsPath, timeout: 2000 },
+        (err, stdout) => {
+          if (err) {
+            console.warn('[FCT] getBlameAuthor error:', err);
+            resolve(undefined);
+            return;
+          }
+          const match = stdout.match(/^author\s+(.+)$/m);
+          resolve(match ? match[1].trim() : undefined);
+        }
       );
-      const match = output.match(/^author\s+(.+)$/m);
-      if (match && match[1]) {
-        return match[1].trim();
-      }
-    } catch (err) {
-      console.warn('[FCT] getBlameAuthor error:', err);
-    }
-    return undefined;
+    });
   }
 
   dispose(): void {
