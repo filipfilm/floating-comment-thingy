@@ -120,25 +120,8 @@
         },
         {
           "command": "fct.deleteThread",
-          "group": "navigation",
-          "when": "commentController == fct"
-        }
-      ],
-      "comments/commentThread/context": [
-        {
-          "command": "fct.addComment",
           "group": "inline",
           "when": "commentController == fct"
-        },
-        {
-          "command": "fct.resolveThread",
-          "group": "inline",
-          "when": "commentController == fct && commentThread == active"
-        },
-        {
-          "command": "fct.unresolveThread",
-          "group": "inline",
-          "when": "commentController == fct && commentThread == resolved"
         }
       ],
       "comments/comment/title": [
@@ -151,18 +134,30 @@
           "command": "fct.deleteComment",
           "group": "inline",
           "when": "commentController == fct && comment == canEdit"
-        }
-      ],
-      "comments/comment/context": [
+        },
         {
           "command": "fct.cancelEdit",
-          "group": "inline@1",
+          "group": "inline",
           "when": "commentController == fct && comment == editing"
         },
         {
           "command": "fct.saveEdit",
-          "group": "inline@2",
+          "group": "inline",
           "when": "commentController == fct && comment == editing"
+        }
+      ],
+      "comments/commentThread/context": [
+        {
+          "command": "fct.addComment",
+          "group": "inline",
+          "when": "commentController == fct"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "fct.revealComment",
+          "when": "view == fct.commentsView && viewItem == fctThreadNode",
+          "group": "inline"
         }
       ],
       "editor/context": [
