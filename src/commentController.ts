@@ -410,6 +410,7 @@ export class FCTCommentController {
     comment.contextValue = 'canEdit';
 
     this.refreshCommentInThread(comment);
+    this.fireTreeRefresh();
   }
 
   /**
@@ -452,6 +453,7 @@ export class FCTCommentController {
     } else {
       vsThread.comments = remaining;
     }
+    this.fireTreeRefresh();
   }
 
   /**
@@ -465,6 +467,7 @@ export class FCTCommentController {
     }
     this.vsThreadToFctId.delete(vsThread);
     vsThread.dispose();
+    this.fireTreeRefresh();
   }
 
   /**
@@ -497,6 +500,7 @@ export class FCTCommentController {
     vsThread.contextValue = 'active';
     vsThread.label = undefined;
     vsThread.collapsibleState = vscode.CommentThreadCollapsibleState.Expanded;
+    this.fireTreeRefresh();
   }
 
   // ─── Loading & Restoring ──────────────────────────────────────────
