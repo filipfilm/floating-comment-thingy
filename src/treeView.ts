@@ -1,13 +1,14 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { ICommentStorage } from './storage';
+import { GitService } from './gitService';
 import { FCTThread } from './types';
 
 export class FCTTreeDataProvider implements vscode.TreeDataProvider<FCTTreeNode> {
   private _onDidChangeTreeData = new vscode.EventEmitter<FCTTreeNode | undefined | void>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-  constructor(private storage: ICommentStorage) {}
+  constructor(private storage: ICommentStorage, private gitService: GitService) {}
 
   refresh(): void {
     this._onDidChangeTreeData.fire();
@@ -17,12 +18,15 @@ export class FCTTreeDataProvider implements vscode.TreeDataProvider<FCTTreeNode>
     return element;
   }
 
-  async getChildren(element?: FCTTreeNode): Promise<FCTTreeNode[]> {
+  private getRepoId(): string {
     const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders || workspaceFolders.length === 0) return [];
-    
-    // For now we assume a single repo/workspace folder
-    const repoId = workspaceFolders[0].uri.fsPath; // Very basic repo ID inference
+    if (!workspaceFolders || workspaceFolders.length === 0) return 'local';
+    // Use gitService.getRepoId() as the canonical source of truth — same as the writer
+    return this.gitService.getRepoId(workspaceFolders[0].uri);
+  }
+
+  async getChildren(element?: FCTTreeNode): Promise<FCTTreeNode[]> {
+    const repoId = this.getRepoId();
 
     if (!element) {
       // Root level: Group by file
@@ -44,9 +48,13 @@ export class FCTTreeDataProvider implements vscode.TreeDataProvider<FCTTreeNode>
         );
         fileNode.description = `${fileThreads.length} comments`;
         fileNode.iconPath = vscode.ThemeIcon.File;
-        // Stash the raw filePath for children lookup
         fileNode.contextValue = 'fctFileNode';
-        fileNode.resourceUri = vscode.Uri.file(path.join(repoId, filePath));
+        // Always resolve the file URI from the workspace root, not repoId
+        // (repoId may be a remote URL when Git is configured)
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (workspaceFolders && workspaceFolders.length > 0) {
+          fileNode.resourceUri = vscode.Uri.joinPath(workspaceFolders[0].uri, filePath);
+        }
         
         nodes.push(fileNode);
       }
@@ -55,7 +63,10 @@ export class FCTTreeDataProvider implements vscode.TreeDataProvider<FCTTreeNode>
     } else {
       // Child level: Show threads for the given file
       const threads = await this.storage.loadAllThreads(repoId);
-      const filePath = path.relative(repoId, element.resourceUri!.fsPath);
+      // Derive the repo-relative filePath from the stored node resourceUri
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      const wsRoot = workspaceFolders?.[0]?.uri.fsPath ?? '';
+      const filePath = path.relative(wsRoot, element.resourceUri!.fsPath);
       
       const fileThreads = threads.filter(t => t.filePath === filePath);
       const nodes: FCTTreeNode[] = [];

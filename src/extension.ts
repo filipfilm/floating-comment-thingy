@@ -149,18 +149,21 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   // ─── Register TreeView ──────────────────────────────────────────
-  const treeDataProvider = new FCTTreeDataProvider(storage);
+  const treeDataProvider = new FCTTreeDataProvider(storage, gitService);
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('fct.commentsView', treeDataProvider)
   );
+
+  // Wire the tree refresh so the panel updates after every mutation
+  commentController.setTreeRefresh(() => treeDataProvider.refresh());
 
   context.subscriptions.push(
     vscode.commands.registerCommand('fct.revealComment', async (thread: FCTThread) => {
       const workspaceFolders = vscode.workspace.workspaceFolders;
       if (!workspaceFolders || workspaceFolders.length === 0) return;
-      const repoId = workspaceFolders[0].uri.fsPath;
+      const rootUri = workspaceFolders[0].uri;
       
-      const uri = vscode.Uri.file(path.join(repoId, thread.filePath));
+      const uri = vscode.Uri.joinPath(rootUri, thread.filePath);
       const doc = await vscode.workspace.openTextDocument(uri);
       const editor = await vscode.window.showTextDocument(doc);
       

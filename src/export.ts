@@ -41,7 +41,9 @@ export async function exportActiveComments(storage: ICommentStorage, repoId: str
       markdown += `- **Location**: \`${filePath}:${linesText}\`\n\n`;
 
       if (t.codeSnippet) {
-        markdown += `\`\`\`typescript\n${t.codeSnippet}\n\`\`\`\n\n`;
+        // Derive fence language from file extension — don't assume TypeScript
+        const ext = filePath.split('.').pop() || '';
+        markdown += `\`\`\`${ext}\n${t.codeSnippet}\n\`\`\`\n\n`;
       }
 
       markdown += `> ${bodyStr.replace(/\n/g, '\n> ')}\n\n`;

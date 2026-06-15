@@ -53,12 +53,18 @@ export class FCTCodeLensProvider implements vscode.CodeLensProvider {
           }
 
           if (count > 0) {
+            // Find the first active thread inside this symbol's range
+            const firstThread = activeThreads.find(t => {
+              const threadLine = t.currentStartLine - 1;
+              return threadLine >= symbol.range.start.line && threadLine <= symbol.range.end.line;
+            });
+
             const lens = new vscode.CodeLens(symbol.range);
             lens.command = {
               title: `💬 ${count} Active Comment${count === 1 ? '' : 's'}`,
-              tooltip: 'Floating comments inside this block',
-              command: '', // Could potentially open the first comment
-              arguments: []
+              tooltip: 'Click to jump to the first comment in this block',
+              command: firstThread ? 'fct.revealComment' : '',
+              arguments: firstThread ? [firstThread] : []
             };
             lenses.push(lens);
           }

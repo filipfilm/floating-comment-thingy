@@ -97,7 +97,18 @@ export class LocalStorage implements ICommentStorage {
       for (const [key, val] of this.threads) {
         obj[key] = val;
       }
-      await fs.writeFile(this.storageFile, JSON.stringify(obj, null, 2), 'utf8');
+      const data = JSON.stringify(obj, null, 2);
+
+      // Write atomically: write to a temp file first, then rename.
+      // This prevents data loss if VS Code or the machine crashes mid-write.
+      const tmpFile = this.storageFile + '.tmp';
+      await fs.writeFile(tmpFile, data, 'utf8');
+
+      // Keep one .bak rotation so a bad edit doesn't nuke everything
+      const bakFile = this.storageFile + '.bak';
+      try { await fs.copyFile(this.storageFile, bakFile); } catch { /* file may not exist yet */ }
+
+      await fs.rename(tmpFile, this.storageFile);
     } catch (err) {
       console.error('[FCT] Failed to save comments to file:', err);
     }

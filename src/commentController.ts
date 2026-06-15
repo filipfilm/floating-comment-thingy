@@ -52,6 +52,18 @@ export class FCTCommentController {
   private anchoringEngine: AnchoringEngine;
   private disposables: vscode.Disposable[] = [];
 
+  /** Callback wired to FCTTreeDataProvider.refresh() — fired after every mutation */
+  private treeRefresh?: () => void;
+
+  /** Register a callback that will be called whenever storage is mutated. */
+  setTreeRefresh(fn: () => void): void {
+    this.treeRefresh = fn;
+  }
+
+  private fireTreeRefresh(): void {
+    this.treeRefresh?.();
+  }
+
   /**
    * Map from VS Code CommentThread to FCT thread ID.
    * We need this because there's no built-in way to associate custom data
@@ -98,9 +110,9 @@ export class FCTCommentController {
       if (!(comment instanceof NoteComment)) return;
       const author = this.getUsername();
       await this.storage.toggleReaction(comment.fctThreadId, comment.fctId, reaction.label, author);
-      
-      // Refresh the specific thread UI
+      // Await the refresh to avoid rendering stale state on rapid clicks
       await this.refreshThreadFromStorage(comment.fctThreadId);
+      this.fireTreeRefresh();
     };
   }
 
@@ -202,9 +214,16 @@ export class FCTCommentController {
 
   /**
    * Create an empty thread from editor selection (context menu action).
+   * When nothing is selected, snaps to the whole current line to avoid
+   * a zero-width, zero-height thread that shows confusing UI.
    */
   createEmptyThread(editor: vscode.TextEditor): void {
-    const range = editor.selection;
+    let range: vscode.Range = editor.selection;
+    // Snap empty (cursor-only) selection to the full line
+    if (range.isEmpty) {
+      const line = editor.document.lineAt(range.start.line);
+      range = line.range;
+    }
     const uri = editor.document.uri;
     const vsThread = this.controller.createCommentThread(uri, range, []);
     vsThread.canReply = true;
@@ -298,6 +317,7 @@ export class FCTCommentController {
     // Track the mapping
     this.vsThreadToFctId.set(vsThread, fctThread.id);
     this.fctIdToVsThread.set(fctThread.id, vsThread);
+    this.fireTreeRefresh();
   }
 
   /**
@@ -316,6 +336,7 @@ export class FCTCommentController {
     const noteComment = this.createNoteComment(fctComment, 'active');
 
     vsThread.comments = [...vsThread.comments, noteComment];
+    this.fireTreeRefresh();
   }
 
   /**
@@ -453,13 +474,14 @@ export class FCTCommentController {
     const fctId = this.vsThreadToFctId.get(vsThread);
     if (fctId) {
       await this.storage.updateThreadStatus(fctId, 'resolved');
-      this.refreshThreadFromStorage(fctId);
+      await this.refreshThreadFromStorage(fctId);
     }
 
     vsThread.contextValue = 'resolved';
     vsThread.label = '✅ Resolved';
     // Collapse resolved threads
     vsThread.collapsibleState = vscode.CommentThreadCollapsibleState.Collapsed;
+    this.fireTreeRefresh();
   }
 
   /**
@@ -469,7 +491,7 @@ export class FCTCommentController {
     const fctId = this.vsThreadToFctId.get(vsThread);
     if (fctId) {
       await this.storage.updateThreadStatus(fctId, 'active');
-      this.refreshThreadFromStorage(fctId);
+      await this.refreshThreadFromStorage(fctId);
     }
 
     vsThread.contextValue = 'active';
